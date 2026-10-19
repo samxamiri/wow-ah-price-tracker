@@ -1,0 +1,368 @@
+/* ---------- Design tokens ---------- */
+:root {
+  --bg: #0f0d0a;
+  --panel: #1b1712;
+  --panel-raised: #241f18;
+  --border: #3a3125;
+  --grid: #2b251c;
+  --text: #ece4d4;
+  --text-muted: #9a8f7d;
+  --accent: #f8b700; /* WoW gold */
+  --accent-dark: #8a6400;
+  --series-2: #6fb7ff;
+  --up: #3ecf6e;
+  --down: #ff6b5e;
+
+  /* Item quality colors, as used in-game (rare/epic lightened for contrast) */
+  --q-poor: #9d9d9d;
+  --q-common: #ffffff;
+  --q-uncommon: #1eff00;
+  --q-rare: #3b9cff;
+  --q-epic: #b56cff;
+  --q-legendary: #ff8000;
+
+  --radius: 8px;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(ellipse at top, #1d1810 0%, var(--bg) 60%) fixed;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  margin: 0;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+.error {
+  color: var(--down);
+}
+.up {
+  color: var(--up);
+}
+.down {
+  color: var(--down);
+}
+
+/* ---------- Layout ---------- */
+.site-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  padding: 1rem 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.logo-coin {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffe27a, var(--accent) 55%, var(--accent-dark));
+  box-shadow: 0 0 8px rgba(248, 183, 0, 0.5);
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 16px 3rem;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.movers {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (max-width: 800px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Panels ---------- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.panel-title {
+  display: block;
+  font-family: Georgia, serif;
+  font-size: 1.1rem;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+.panel-header .panel-title {
+  margin-bottom: 0;
+}
+
+/* ---------- Search ---------- */
+.search-input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.search-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.item-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  max-height: 32rem;
+  overflow-y: auto;
+}
+
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  color: inherit;
+}
+.item-row:hover {
+  background: var(--panel-raised);
+  text-decoration: none;
+}
+
+.item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-price {
+  white-space: nowrap;
+}
+
+/* ---------- Item icons & quality ---------- */
+.item-icon {
+  flex-shrink: 0;
+  border-radius: 4px;
+  border: 2px solid var(--q-common);
+  object-fit: cover;
+}
+
+.item-icon-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3a3125, #1b1712);
+  font-family: Georgia, serif;
+  font-weight: bold;
+  color: var(--text-muted);
+}
+
+.quality-poor { color: var(--q-poor); }
+.quality-common { color: var(--q-common); }
+.quality-uncommon { color: var(--q-uncommon); }
+.quality-rare { color: var(--q-rare); }
+.quality-epic { color: var(--q-epic); }
+.quality-legendary { color: var(--q-legendary); }
+
+.quality-border-poor { border-color: var(--q-poor); }
+.quality-border-common { border-color: #6d6658; }
+.quality-border-uncommon { border-color: var(--q-uncommon); }
+.quality-border-rare { border-color: var(--q-rare); }
+.quality-border-epic { border-color: var(--q-epic); }
+.quality-border-legendary { border-color: var(--q-legendary); }
+
+/* ---------- Gold amounts ---------- */
+.gold-amount {
+  display: inline-flex;
+  gap: 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.coin::after {
+  content: "";
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-left: 0.15em;
+  border-radius: 50%;
+  vertical-align: 0.05em;
+}
+.coin-gold::after { background: radial-gradient(circle at 35% 35%, #ffe27a, #d9a400); }
+.coin-silver::after { background: radial-gradient(circle at 35% 35%, #ffffff, #9fa7b0); }
+.coin-copper::after { background: radial-gradient(circle at 35% 35%, #f2a36b, #a0522d); }
+
+/* ---------- Tables ---------- */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  padding: 0.4rem 0.5rem;
+}
+.table td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--grid);
+}
+.table .num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.item-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ---------- Item page ---------- */
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.item-header h1 {
+  font-size: 1.8rem;
+}
+.item-header p {
+  margin: 0;
+}
+
+.signal {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+.signal-buy {
+  border-color: var(--up);
+  background: rgba(62, 207, 110, 0.1);
+}
+.signal-sell {
+  border-color: var(--down);
+  background: rgba(255, 107, 94, 0.1);
+}
+.signal-hold,
+.signal-unknown {
+  background: var(--panel);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+}
+.stat dt {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.stat dd {
+  margin: 0.25rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.range-buttons {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.range-buttons button {
+  padding: 0.35rem 0.8rem;
+  font: inherit;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.range-buttons button + button {
+  border-left: 1px solid var(--border);
+}
+.range-buttons button.active {
+  background: var(--accent);
+  color: #1b1200;
+  font-weight: 600;
+}
+
+.chart {
+  width: 100%;
+}
