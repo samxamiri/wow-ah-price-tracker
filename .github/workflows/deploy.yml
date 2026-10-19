@@ -1,0 +1,76 @@
+# Continuous Deployment: after CI passes on main, build images, push them to
+# Amazon ECR and roll them out to the Kubernetes cluster.
+#
+# It does nothing until you finish docs/DEPLOY_AWS.md and set the repository
+# variable DEPLOY_ENABLED=true, so it won't fail before AWS is set up.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write # lets GitHub log in to AWS with OIDC (no stored AWS keys)
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Log in to AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push images
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          for svc in api web worker; do
+            docker build -t "$REGISTRY/wow-ah-$svc:$TAG" "./$svc"
+            docker push "$REGISTRY/wow-ah-$svc:$TAG"
+          done
+
+      - name: Set up kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Deploy to Kubernetes
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+
+          # Let the cluster pull from ECR. ECR passwords expire after 12 hours,
+          # so this is refreshed on every deploy.
+          kubectl -n wow-ah create secret docker-registry ecr-pull \
+            --docker-server="$REGISTRY" \
+            --docker-username=AWS \
+            --docker-password="$(aws ecr get-login-password)" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          # Point the manifests at the images we just pushed.
+          cd k8s
+          for svc in api web worker; do
+            kustomize edit set image "wow-ah-$svc=$REGISTRY/wow-ah-$svc:$TAG"
+          done
+          kubectl apply -k .
+
+          kubectl -n wow-ah rollout status deployment/api --timeout=180s
+          kubectl -n wow-ah rollout status deployment/web --timeout=180s
