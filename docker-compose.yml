@@ -1,0 +1,59 @@
+# Runs the whole stack locally:  docker compose up --build
+# Then open http://localhost:8080
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: wow
+      POSTGRES_PASSWORD: wow
+      POSTGRES_DB: wow_ah
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wow -d wow_ah"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql://wow:wow@db:5432/wow_ah
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 5s
+      retries: 10
+
+  # Runs once on "up" and exits. In mock mode, the first run fills 30 days of
+  # fake history. Take another snapshot any time with:
+  #   docker compose run --rm worker
+  worker:
+    build: ./worker
+    environment:
+      DATABASE_URL: postgresql://wow:wow@db:5432/wow_ah
+      MOCK_DATA: ${MOCK_DATA:-true}
+      BLIZZARD_CLIENT_ID: ${BLIZZARD_CLIENT_ID:-}
+      BLIZZARD_CLIENT_SECRET: ${BLIZZARD_CLIENT_SECRET:-}
+      BLIZZARD_REGION: ${BLIZZARD_REGION:-us}
+    depends_on:
+      api: # the API creates the tables on startup
+        condition: service_healthy
+    restart: "no"
+
+  web:
+    build: ./web
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
