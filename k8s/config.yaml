@@ -1,0 +1,8 @@
+# Non-secret settings shared by the pods. Secrets live in secret.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  MOCK_DATA: "true"
+  BLIZZARD_REGION: "us"

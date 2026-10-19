@@ -1,0 +1,5 @@
+# A namespace groups all of this app's resources so they don't mix with others.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wow-ah

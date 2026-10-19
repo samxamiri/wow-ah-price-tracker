@@ -1,0 +1,46 @@
+# Runs the Python worker every hour, at 10 minutes past
+# (Blizzard refreshes Auction House data about once an hour).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: worker
+spec:
+  schedule: "10 * * * *"
+  concurrencyPolicy: Forbid # never run two snapshots at the same time
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: ecr-pull
+          containers:
+            - name: worker
+              image: wow-ah-worker
+              envFrom:
+                - configMapRef:
+                    name: app-config
+              env:
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: app-secrets
+                      key: POSTGRES_PASSWORD
+                - name: DATABASE_URL
+                  value: postgresql://wow:$(POSTGRES_PASSWORD)@postgres:5432/wow_ah
+                - name: BLIZZARD_CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: app-secrets
+                      key: BLIZZARD_CLIENT_ID
+                - name: BLIZZARD_CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: app-secrets
+                      key: BLIZZARD_CLIENT_SECRET
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits: { memory: 1Gi } # the real commodities payload is large
