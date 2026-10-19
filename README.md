@@ -1,5 +1,9 @@
 # AH Price Tracker
 
+**Live demo:** https://wow-ah-price-tracker.vercel.app (the API sleeps when idle, so the first load can take up to a minute)
+
+[![CI](https://github.com/samxamiri/wow-ah-price-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/samxamiri/wow-ah-price-tracker/actions/workflows/ci.yml)
+
 A full-stack web app that tracks **World of Warcraft Auction House prices** over time.
 
 In-game, the Auction House only shows today's prices. This app saves a price snapshot every hour, so you can see how prices for herbs, ore, potions and other materials move over time and when it's a good time to buy or sell.

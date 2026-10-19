@@ -16,6 +16,24 @@ Newest session at the top.
 
 ---
 
+## 2026-10-19: Going live for free
+
+**Studied:** how the three parts get hosted when they're split across services: static files (Vercel) vs. an always-running server (Render) vs. a database (Neon). Also why the AWS plan was dropped (it costs money).
+
+**Clicked:**
+- A React build is just files, so any static host can serve it. The API is a running program, so it needs a real server.
+- **CORS:** when the site and the API are on different domains, the browser blocks the response unless the API sends `Access-Control-Allow-Origin`.
+- `VITE_*` env vars get baked into the JavaScript at **build** time, not read at runtime.
+- Secrets (the Neon connection string) live in GitHub/Render settings, never in the code.
+
+**Built/changed:** `render.yaml`, `web/vercel.json`, `.github/workflows/worker.yml`, CORS in `api/src/app.ts`, `docs/DEPLOY_FREE.md`. Pushed to GitHub; first CI run passed (including all 3 Docker builds).
+
+**Live:** https://wow-ah-price-tracker.vercel.app · API https://wow-ah-api.onrender.com/health
+
+**Next:** read `docs/DEPLOY_FREE.md` and the commit "Add free deployment". Then Docker Desktop, to run `docker compose` and the `k8s/` manifests locally.
+
+---
+
 ## 2026-10-19: Project kickoff
 
 **Studied:** picked the project. An Auction House price tracker uses every technology on my resume list in a way that makes sense (see README "Tech stack").
