@@ -1,0 +1,17 @@
+# Dependencies & build output
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Secrets: never commit these
+.env
+k8s/secret.yaml
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
