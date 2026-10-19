@@ -1,0 +1,114 @@
+# Continuous Integration: runs on every pull request and every push to main.
+# A PR shouldn't be merged unless all of these jobs pass.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  api:
+    name: API (Node.js + TypeScript)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  web:
+    name: Web (React + TypeScript)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build # also type-checks
+
+  worker:
+    name: Worker (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: worker/requirements*.txt
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: pytest
+
+  # Runs the real API and worker against a real PostgreSQL, then calls every
+  # endpoint. This catches SQL mistakes that the unit tests can't.
+  integration:
+    name: Integration (API + worker + PostgreSQL)
+    needs: [api, worker]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: wow
+          POSTGRES_PASSWORD: wow
+          POSTGRES_DB: wow_ah
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U wow" --health-interval 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://wow:wow@localhost:5432/wow_ah
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Start API
+        working-directory: api
+        run: |
+          npm ci
+          npm run build
+          node dist/index.js > api.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:3000/health && break; sleep 1; done
+      - name: Load mock data
+        working-directory: worker
+        run: |
+          pip install -r requirements.txt
+          MOCK_DATA=true python -m ah_worker.main
+      - run: bash scripts/smoke-test.sh
+      - name: Show API log on failure
+        if: failure()
+        run: cat api/api.log
+
+  docker:
+    name: Docker build (${{ matrix.service }})
+    needs: [api, web, worker]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api, web, worker]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t wow-ah-${{ matrix.service }}:ci ./${{ matrix.service }}
