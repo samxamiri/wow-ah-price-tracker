@@ -1,6 +1,7 @@
 # Continuous Deployment: after CI passes on main, build images, push them to
 # Amazon ECR and roll them out to the Kubernetes cluster.
 #
+# Optional and paid: the live site uses the free setup in docs/DEPLOY_FREE.md.
 # It does nothing until you finish docs/DEPLOY_AWS.md and set the repository
 # variable DEPLOY_ENABLED=true, so it won't fail before AWS is set up.
 name: Deploy

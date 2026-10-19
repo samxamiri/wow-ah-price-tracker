@@ -39,6 +39,13 @@ export function createApp(repo: Repository) {
 
   const api = express.Router();
 
+  // CORS: lets the website call this API from a different domain (Vercel → Render).
+  // The API is public and read-only (GET only, no cookies), so any origin is fine.
+  api.use((_req, res, next) => {
+    res.set("Access-Control-Allow-Origin", "*");
+    next();
+  });
+
   // GET /api/items?search=ore&limit=20
   api.get(
     "/items",

@@ -1,0 +1,15 @@
+# Render Blueprint: describes the API service as code ("infrastructure as code").
+# In Render: New → Blueprint → pick this repo. Render builds api/Dockerfile and runs it.
+services:
+  - type: web
+    name: wow-ah-api
+    runtime: docker
+    plan: free # sleeps after ~15 min idle; the first request then takes ~30-60 s
+    rootDir: api
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    # Only redeploy after the GitHub Actions CI checks pass on main.
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: DATABASE_URL
+        sync: false # Render asks for it on setup: paste the Neon connection string

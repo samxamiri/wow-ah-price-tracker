@@ -105,3 +105,10 @@ describe("errors", () => {
     expect(res.body).toEqual({ error: "Internal server error" });
   });
 });
+
+describe("CORS", () => {
+  it("lets other domains (the Vercel site) read /api responses", async () => {
+    const res = await request(createApp(fakeRepo())).get("/api/movers");
+    expect(res.headers["access-control-allow-origin"]).toBe("*");
+  });
+});

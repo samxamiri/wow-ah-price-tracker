@@ -30,8 +30,8 @@ In-game, the Auction House only shows today's prices. This app saves a price sna
 | **SQL** | PostgreSQL schema plus queries using `LATERAL` joins, `DISTINCT ON`, window functions and CTEs (`api/src/repository.ts`) |
 | **Docker** | A Dockerfile per service, plus `docker-compose.yml` for local dev |
 | **Kubernetes** | Deployments, StatefulSet, CronJob, Services, Ingress, Secrets (`k8s/`) |
-| **AWS** | ECR (image registry) + EC2 running k3s (see [docs/DEPLOY_AWS.md](docs/DEPLOY_AWS.md)) |
-| **CI/CD** | GitHub Actions: test, integration test and build on every PR; deploy on merge (`.github/workflows/`) |
+| **Cloud hosting** | Live on free tiers: Vercel (web), Render (API as a Docker container), Neon (PostgreSQL), GitHub Actions (hourly worker). See [docs/DEPLOY_FREE.md](docs/DEPLOY_FREE.md) |
+| **CI/CD** | GitHub Actions: test, integration test and build on every PR; Render and Vercel redeploy on merge to `main` (`.github/workflows/`) |
 | **Git** | Feature branches + pull requests |
 | **Agile** | User stories, sprints, GitHub Projects board (see [docs/AGILE.md](docs/AGILE.md)) |
 
@@ -48,7 +48,7 @@ flowchart LR
 
 1. Every hour, the **worker** downloads all commodity listings from Blizzard (often 100k+), condenses them into one row per item (lowest price, average price, quantity), and saves them to PostgreSQL.
 2. The **API** answers questions about that data with SQL and returns JSON.
-3. The **web** app (React) calls the API and draws the pages and charts. In production, nginx serves the built files and forwards `/api/*` to the API.
+3. The **web** app (React) calls the API and draws the pages and charts. In Docker/Kubernetes, nginx serves the built files and forwards `/api/*` to the API. On the free live deployment, Vercel serves the files and the browser calls the Render API directly (CORS).
 
 ### Database
 
@@ -143,8 +143,9 @@ worker/                 Python data worker
   ah_worker/mock.py       fake data generator
   ah_worker/db.py         inserts into PostgreSQL
 k8s/                    Kubernetes manifests (kubectl apply -k k8s)
-.github/workflows/      CI (ci.yml) and CD (deploy.yml)
-docs/                   AWS deployment and Agile process
+.github/workflows/      CI (ci.yml), hourly worker (worker.yml), optional AWS deploy (deploy.yml)
+render.yaml             Render config for the API (infrastructure as code)
+docs/                   deployment guides and Agile process
 docker-compose.yml      whole stack locally
 ```
 
@@ -157,8 +158,8 @@ To learn the project from the inside out, read it in the order the data flows:
 3. **Serving data:** `api/src/index.ts` → `app.ts` (routes) → `repository.ts` (SQL). Run each query yourself in `psql`.
 4. **Showing data:** `web/src/main.tsx` → `App.tsx` → `pages/` → `components/`.
 5. **Containers:** each `Dockerfile`, then `docker-compose.yml`.
-6. **CI/CD:** `.github/workflows/ci.yml`, then `deploy.yml`.
+6. **CI/CD:** `.github/workflows/ci.yml`, then `worker.yml`.
 7. **Kubernetes:** `k8s/kustomization.yaml`, then each manifest.
-8. **AWS:** `docs/DEPLOY_AWS.md`.
+8. **Live deployment:** `docs/DEPLOY_FREE.md`, `render.yaml`, `web/vercel.json`. (`docs/DEPLOY_AWS.md` is an optional paid alternative.)
 
 Good exercises: add a "watchlist" feature (new table, endpoint and page), add a `GET /api/items/:id/quantity` endpoint, or change the buy/sell threshold to come from an environment variable.

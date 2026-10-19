@@ -1,8 +1,13 @@
 import type { ItemDetail, ItemSummary, Mover, PricePoint, PriceRange } from "./types";
 
-// Relative URL: works with the Vite proxy in dev and with nginx in production.
+// Where the API lives. Left empty, calls go to the same site ("/api/..."), which
+// the Vite proxy (dev) and nginx (Docker/Kubernetes) forward to the API.
+// On Vercel the API is on a different domain (Render), so the build sets
+// VITE_API_URL=https://<your-api>.onrender.com and the browser calls it directly.
+const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+
 async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(`/api${path}`);
+  const res = await fetch(`${API_BASE}/api${path}`);
   if (!res.ok) {
     throw new Error(res.status === 404 ? "Not found" : `Request failed (${res.status})`);
   }
