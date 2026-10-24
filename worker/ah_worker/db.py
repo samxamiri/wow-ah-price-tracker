@@ -42,7 +42,7 @@ def upsert_item_info(conn: psycopg.Connection, info: ItemInfo, fetched: bool = T
 def items_missing_metadata(conn: psycopg.Connection, limit: int) -> list[int]:
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT id FROM items WHERE metadata_updated_at IS NULL ORDER BY id LIMIT %s",
+            "SELECT id FROM items WHERE metadata_updated_at IS NULL ORDER BY id DESC LIMIT %s",
             (limit,),
         )
         return [row[0] for row in cur.fetchall()]

@@ -33,8 +33,8 @@ jobs:
           BLIZZARD_CLIENT_ID: ${{ secrets.BLIZZARD_CLIENT_ID }}
           BLIZZARD_CLIENT_SECRET: ${{ secrets.BLIZZARD_CLIENT_SECRET }}
           BLIZZARD_REGION: us
-          # Each new item needs 2 API calls for its name and icon. 500 per run
-          # names a few thousand items within a day or two.
-          METADATA_BATCH_SIZE: "500"
+          # Each new item needs 2 API calls for its name and icon (~6 min for 2000).
+          # Newest items (highest IDs) go first, so current-expansion items get named first.
+          METADATA_BATCH_SIZE: "2000"
           RETENTION_DAYS: "30"
         run: python -m ah_worker.main
