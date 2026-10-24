@@ -12,6 +12,10 @@ const RANGE_INTERVALS: Record<PriceRange, string> = {
   "30d": "30 days",
 };
 
+// Items with only a few units listed jump around wildly (one cheap listing
+// = "-80%!"), so the movers page ignores them.
+const MIN_MOVER_QUANTITY = 100;
+
 // Escape % and _ so a search for "100%" doesn't act as a wildcard.
 function likePattern(search: string): string {
   return `%${search.replace(/[\\%_]/g, "\\$&")}%`;
@@ -139,7 +143,7 @@ export class PgRepository implements Repository {
     // i.e. each item's newest snapshot (or newest one at least 24h older).
     const { rows } = await this.pool.query(
       `WITH latest AS (
-         SELECT DISTINCT ON (item_id) item_id, snapshot_time, min_price
+         SELECT DISTINCT ON (item_id) item_id, snapshot_time, min_price, total_quantity
            FROM price_snapshots
           ORDER BY item_id, snapshot_time DESC
        ),
@@ -158,6 +162,7 @@ export class PgRepository implements Repository {
          JOIN day_ago d ON d.item_id = l.item_id
          JOIN items i   ON i.id = l.item_id
         WHERE d.min_price > 0
+          AND l.total_quantity >= ${MIN_MOVER_QUANTITY}
           AND ${changeFilter}
         ORDER BY change_pct ${order}
         LIMIT $1`,

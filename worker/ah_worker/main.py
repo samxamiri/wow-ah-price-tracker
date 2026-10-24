@@ -54,11 +54,13 @@ def run_blizzard(conn, config: Config) -> None:
     # Look up names/icons for a limited number of new items per run so we
     # stay well under Blizzard's rate limit. The rest get filled in later runs.
     missing = db.items_missing_metadata(conn, config.metadata_batch_size)
-    for item_id in missing:
+    for n, item_id in enumerate(missing, start=1):
         try:
             db.upsert_item_info(conn, client.get_item(item_id))
         except requests.HTTPError as err:
             log.warning("could not fetch item %s: %s", item_id, err)
+        if n % 50 == 0:
+            conn.commit()  # keep progress if the run gets cut off
     log.info("blizzard: fetched metadata for %d item(s)", len(missing))
 
 
@@ -81,6 +83,9 @@ def main(argv: list[str] | None = None) -> None:
                 parser.error("--backfill-days only works with MOCK_DATA=true "
                              "(Blizzard's API has no price history)")
             run_blizzard(conn, config)
+        if config.retention_days:
+            deleted = db.delete_snapshots_older_than(conn, config.retention_days)
+            log.info("deleted %d snapshot(s) older than %d days", deleted, config.retention_days)
         # Leaving the `with` block commits the transaction.
 
 

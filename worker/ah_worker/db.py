@@ -72,3 +72,13 @@ def insert_snapshots(conn: psycopg.Connection, snapshots: list[Snapshot]) -> Non
                 for s in snapshots
             ],
         )
+
+
+def delete_snapshots_older_than(conn: psycopg.Connection, days: int) -> int:
+    """Delete old snapshots and return how many rows were removed."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "DELETE FROM price_snapshots WHERE snapshot_time < now() - make_interval(days => %s)",
+            (days,),
+        )
+        return cur.rowcount
