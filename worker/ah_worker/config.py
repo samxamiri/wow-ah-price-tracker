@@ -16,6 +16,7 @@ class Config:
     blizzard_client_secret: str
     region: str
     metadata_batch_size: int
+    retention_days: int
 
 
 def load_config() -> Config:
@@ -30,4 +31,7 @@ def load_config() -> Config:
         region=os.environ.get("BLIZZARD_REGION", "us"),
         # How many new items get their name/icon looked up per run.
         metadata_batch_size=int(os.environ.get("METADATA_BATCH_SIZE", "100")),
+        # Snapshots older than this get deleted, so the database stays small
+        # (Neon's free plan has 0.5 GB). 0 = keep everything.
+        retention_days=int(os.environ.get("RETENTION_DAYS", "30")),
     )

@@ -1,7 +1,8 @@
 # Runs the Python worker every hour on GitHub's servers, writing to the
 # Neon database. This replaces the Kubernetes CronJob for the free deployment.
 #
-# Needs the repository secret DATABASE_URL (the Neon connection string).
+# Needs the repository secrets DATABASE_URL (the Neon connection string),
+# BLIZZARD_CLIENT_ID and BLIZZARD_CLIENT_SECRET (from develop.battle.net).
 # Also has a "Run workflow" button (workflow_dispatch) to run it by hand.
 name: Worker
 
@@ -13,7 +14,7 @@ on:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: worker
@@ -28,5 +29,12 @@ jobs:
       - name: Take a snapshot
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          MOCK_DATA: "true"
+          MOCK_DATA: "false"
+          BLIZZARD_CLIENT_ID: ${{ secrets.BLIZZARD_CLIENT_ID }}
+          BLIZZARD_CLIENT_SECRET: ${{ secrets.BLIZZARD_CLIENT_SECRET }}
+          BLIZZARD_REGION: us
+          # Each new item needs 2 API calls for its name and icon. 500 per run
+          # names a few thousand items within a day or two.
+          METADATA_BATCH_SIZE: "500"
+          RETENTION_DAYS: "30"
         run: python -m ah_worker.main
